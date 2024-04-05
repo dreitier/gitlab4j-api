@@ -67,6 +67,7 @@ public class GitLabApiClient implements AutoCloseable {
     private Supplier<String> authToken;
     private String secretToken;
     private boolean ignoreCertificateErrors;
+    private boolean useCustomSslContext;
     private SSLContext openSslContext;
     private HostnameVerifier openHostnameVerifier;
     private Long sudoAsId;
@@ -230,6 +231,12 @@ public class GitLabApiClient implements AutoCloseable {
 
         clientConfig = new ClientConfig();
         if (clientConfigProperties != null) {
+
+            if (clientConfigProperties.containsKey("SSL_CONTEXT")){
+                this.useCustomSslContext = true;
+                this.openSslContext = (SSLContext) clientConfigProperties.get("SSL_CONTEXT");
+                clientConfigProperties.remove("SSL_CONTEXT");
+            }
 
             if (clientConfigProperties.containsKey(ClientProperties.PROXY_URI)) {
                 clientConfig.connectorProvider(new ApacheConnectorProvider());
@@ -818,6 +825,8 @@ public class GitLabApiClient implements AutoCloseable {
 
         if (ignoreCertificateErrors) {
             clientBuilder.sslContext(openSslContext).hostnameVerifier(openHostnameVerifier);
+        } else if (useCustomSslContext){
+            clientBuilder.sslContext(openSslContext);
         }
 
         apiClient = clientBuilder.build();
@@ -977,5 +986,13 @@ public class GitLabApiClient implements AutoCloseable {
      */
     public void setAuthTokenSupplier(Supplier<String> authTokenSupplier) {
         this.authToken = authTokenSupplier;
+    }
+
+    public void setUseCustomSslContext(boolean useCustomSslContext) {
+        this.useCustomSslContext = useCustomSslContext;
+    }
+
+    public void setOpenSslContext(SSLContext openSslContext) {
+        this.openSslContext = openSslContext;
     }
 }
